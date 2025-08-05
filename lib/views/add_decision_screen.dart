@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'dart:ui' as ui;
 
 class AddDecisionScreen extends StatefulWidget {
   @override
@@ -8,159 +12,215 @@ class AddDecisionScreen extends StatefulWidget {
 class _AddDecisionScreenState extends State<AddDecisionScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  String username = '';
-  String email = '';
-  String password = '';
-  String confirmPassword = '';
-  bool rememberMe = false;
+  // Fields
+  String title = '';
+  String description = '';
+  String decisionNumber = '';
+  DateTime? decisionDate;
+  String ownerName = '';
+  String area = '';
+  String region = '';
+  DateTime? createdAt;
+  String? attachmentFileName;
+
+  Future<void> _pickDecisionDate() async {
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: decisionDate ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+      locale: const Locale('ar'),
+    );
+    if (picked != null) {
+      setState(() {
+        decisionDate = picked;
+      });
+    }
+  }
+
+  Future<void> _pickCreatedAtDate() async {
+    DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: createdAt ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime(2100),
+      locale: const Locale('ar'),
+    );
+    if (picked != null) {
+      setState(() {
+        createdAt = picked;
+      });
+    }
+  }
+
+  Future<void> _pickAttachment() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    if (result != null && result.files.single.path != null) {
+      setState(() {
+        attachmentFileName = File(
+          result.files.single.path!,
+        ).path.split('/').last;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Add Decision')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              Text(
-                'Default form',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Basic form layout',
-                style: TextStyle(color: Colors.grey[700]),
-              ),
-              SizedBox(height: 24),
-
-              // Username
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Username',
-                  border: OutlineInputBorder(),
-                  hintText: 'Username',
+    return Directionality(
+      textDirection: ui.TextDirection.ltr,
+      child: Scaffold(
+        appBar: AppBar(title: Text('إضافة قرار نزع ملكية')),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              children: [
+                _buildLabel('اسم القرار'),
+                TextFormField(
+                  decoration: _inputDecoration('أدخل اسم القرار'),
+                  onSaved: (value) => title = value ?? '',
+                  validator: _requiredValidator,
                 ),
-                onSaved: (value) => username = value ?? '',
-                validator: (value) {
-                  if (value == null || value.isEmpty)
-                    return 'Please enter username';
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
+                SizedBox(height: 16),
 
-              // Email
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Email address',
-                  border: OutlineInputBorder(),
-                  hintText: 'Email',
+                _buildLabel('وصف القرار'),
+                TextFormField(
+                  maxLines: 3,
+                  decoration: _inputDecoration('أدخل وصف القرار'),
+                  onSaved: (value) => description = value ?? '',
+                  validator: _requiredValidator,
                 ),
-                keyboardType: TextInputType.emailAddress,
-                onSaved: (value) => email = value ?? '',
-                validator: (value) {
-                  if (value == null || value.isEmpty)
-                    return 'Please enter email';
-                  if (!RegExp(r'\S+@\S+\.\S+').hasMatch(value))
-                    return 'Please enter a valid email';
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
+                SizedBox(height: 16),
 
-              // Password
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
-                  hintText: 'Password',
+                _buildLabel('رقم القرار'),
+                TextFormField(
+                  decoration: _inputDecoration('أدخل رقم القرار'),
+                  onSaved: (value) => decisionNumber = value ?? '',
+                  validator: _requiredValidator,
                 ),
-                obscureText: true,
-                onSaved: (value) => password = value ?? '',
-                validator: (value) {
-                  if (value == null || value.isEmpty)
-                    return 'Please enter password';
-                  if (value.length < 6)
-                    return 'Password must be at least 6 characters';
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
+                SizedBox(height: 16),
 
-              // Confirm Password
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Confirm Password',
-                  border: OutlineInputBorder(),
-                  hintText: 'Password',
-                ),
-                obscureText: true,
-                onSaved: (value) => confirmPassword = value ?? '',
-                validator: (value) {
-                  if (value == null || value.isEmpty)
-                    return 'Please confirm your password';
-                  if (value != password) return 'Passwords do not match';
-                  return null;
-                },
-              ),
-              SizedBox(height: 16),
-
-              // Remember me Checkbox
-              Row(
-                children: [
-                  Checkbox(
-                    value: rememberMe,
-                    onChanged: (bool? newValue) {
-                      setState(() {
-                        rememberMe = newValue ?? false;
-                      });
-                    },
-                  ),
-                  Text('Remember me'),
-                ],
-              ),
-              SizedBox(height: 24),
-
-              // Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      child: Text('Submit'),
-                      onPressed: () {
-                        final form = _formKey.currentState!;
-                        if (form.validate()) {
-                          form.save();
-                          // هنا يمكنك تنفيذ ما تريده بعد الحفظ، مثل إرسال البيانات أو عرض رسالة
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Form submitted successfully'),
-                            ),
-                          );
-                        }
-                      },
+                _buildLabel('تاريخ القرار'),
+                InkWell(
+                  onTap: _pickDecisionDate,
+                  child: InputDecorator(
+                    decoration: _inputDecoration('اختر تاريخ القرار'),
+                    child: Text(
+                      decisionDate == null
+                          ? ''
+                          : DateFormat('yyyy-MM-dd').format(decisionDate!),
                     ),
                   ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: OutlinedButton(
-                      child: Text('Cancel'),
-                      onPressed: () {
-                        _formKey.currentState?.reset();
-                        setState(() {
-                          rememberMe = false;
-                        });
-                      },
+                ),
+                SizedBox(height: 16),
+
+                _buildLabel('اسم المالك'),
+                TextFormField(
+                  decoration: _inputDecoration('أدخل اسم المالك'),
+                  onSaved: (value) => ownerName = value ?? '',
+                  validator: _requiredValidator,
+                ),
+                SizedBox(height: 16),
+
+                _buildLabel('المساحة'),
+                TextFormField(
+                  decoration: _inputDecoration('أدخل المساحة'),
+                  onSaved: (value) => area = value ?? '',
+                  validator: _requiredValidator,
+                ),
+                SizedBox(height: 16),
+
+                _buildLabel('المنطقة'),
+                TextFormField(
+                  decoration: _inputDecoration('أدخل اسم المنطقة'),
+                  onSaved: (value) => region = value ?? '',
+                  validator: _requiredValidator,
+                ),
+                SizedBox(height: 16),
+
+                _buildLabel('تاريخ الإنشاء'),
+                InkWell(
+                  onTap: _pickCreatedAtDate,
+                  child: InputDecorator(
+                    decoration: _inputDecoration('اختر تاريخ الإنشاء'),
+                    child: Text(
+                      createdAt == null
+                          ? ''
+                          : DateFormat('yyyy-MM-dd').format(createdAt!),
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+                SizedBox(height: 16),
+
+                _buildLabel('إدراج المرفق'),
+                ElevatedButton.icon(
+                  icon: Icon(Icons.attach_file),
+                  label: Text('اختر ملف'),
+                  onPressed: _pickAttachment,
+                ),
+                if (attachmentFileName != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text('الملف: $attachmentFileName'),
+                  ),
+                SizedBox(height: 24),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        child: Text('حفظ'),
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            _formKey.currentState!.save();
+                            // يمكنك هنا إرسال البيانات إلى الخادم أو حفظها
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('تم حفظ البيانات بنجاح')),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: OutlinedButton(
+                        child: Text('إلغاء'),
+                        onPressed: () {
+                          _formKey.currentState?.reset();
+                          setState(() {
+                            decisionDate = null;
+                            createdAt = null;
+                            attachmentFileName = null;
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+    );
+  }
+
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(hintText: hint, border: OutlineInputBorder());
+  }
+
+  String? _requiredValidator(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'هذا الحقل مطلوب';
+    }
+    return null;
   }
 }

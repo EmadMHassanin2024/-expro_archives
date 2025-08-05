@@ -1,12 +1,21 @@
+import 'dart:io'; // مهم لدعم File
+
 class DecisionModel {
   final String? id;
   final String title;
   final String description;
   final String decisionNumber;
   final DateTime decisionDate;
-  //مسار ملف المسودة (PDF)
+
+  // المسار الحالي كـ String (مناسب للتخزين)
   final String draftPdfPath;
-  final List<String> attachments;
+
+  // 💡 جديد: دعم تحميل الملف من الجهاز
+  final File? draftPdfFile;
+
+  final List<String> attachments; // روابط أو مسارات
+  final List<File>? attachmentFiles; // 💡 جديد: لدعم المرفقات من الجهاز
+
   final DateTime? createdAt;
 
   DecisionModel({
@@ -16,7 +25,9 @@ class DecisionModel {
     required this.decisionNumber,
     required this.decisionDate,
     required this.draftPdfPath,
+    this.draftPdfFile,
     required this.attachments,
+    this.attachmentFiles,
     this.createdAt,
   });
 
@@ -24,7 +35,7 @@ class DecisionModel {
     return DecisionModel(
       id: json['id'],
       title: json['title'],
-      description: json[' description'],
+      description: json['description'], // تم تصحيح وجود فراغ زائد
       decisionNumber: json['decisionNumber'],
       decisionDate: DateTime.parse(json['decisionDate']),
       draftPdfPath: json['draftPdfPath'],
