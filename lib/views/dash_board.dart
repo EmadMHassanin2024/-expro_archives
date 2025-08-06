@@ -1,6 +1,7 @@
+import 'package:expro_archives/views/decision_workflow.dart';
+import 'package:flutter/material.dart';
 import 'package:expro_archives/views/add_decision_screen.dart';
 import 'package:expro_archives/views/view_decision_screen.dart';
-import 'package:flutter/material.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -8,7 +9,7 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl, // دعم اللغة العربية
+      textDirection: TextDirection.rtl,
       child: Scaffold(
         appBar: AppBar(
           title: const Text(
@@ -19,21 +20,16 @@ class DashboardScreen extends StatelessWidget {
           backgroundColor: Colors.teal,
         ),
         body: DefaultTextStyle(
-          style: const TextStyle(
-            color: Colors.black,
-          ), // تطبيق اللون الأسود للنصوص
+          style: const TextStyle(color: Colors.black),
           child: Column(
             children: [
               const SizedBox(height: 16),
-
-              // زر إضافة + شريط البحث
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Row(
                   children: [
                     ElevatedButton.icon(
                       onPressed: () {
-                        // TODO: التنقل إلى صفحة إضافة قرار
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -65,10 +61,7 @@ class DashboardScreen extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(height: 16),
-
-              // الجدول
               Expanded(
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -81,79 +74,15 @@ class DashboardScreen extends StatelessWidget {
                           Colors.teal.shade100,
                         ),
                         border: TableBorder.all(color: Colors.grey.shade300),
-                        columns: [
-                          DataColumn(
-                            label: Text(
-                              'م',
-                              style: TextStyle(
-                                color: Colors.cyan[300],
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'اسم قرار النزع',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'رقم قرار النزع',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'التاريخ',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'اسم المالك',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'المساحة',
-                              style: TextStyle(
-                                color: Colors.cyan[300],
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'المنطقة',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          DataColumn(
-                            label: Text(
-                              'الإجراءات',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
+                        columns: const [
+                          DataColumn(label: Text('م')),
+                          DataColumn(label: Text('اسم قرار النزع')),
+                          DataColumn(label: Text('رقم قرار النزع')),
+                          DataColumn(label: Text('التاريخ')),
+                          DataColumn(label: Text('اسم المالك')),
+                          DataColumn(label: Text('المساحة')),
+                          DataColumn(label: Text('المنطقة')),
+                          DataColumn(label: Text('الإجراءات')),
                         ],
                         rows: [
                           DataRow(
@@ -171,7 +100,6 @@ class DashboardScreen extends StatelessWidget {
                                     IconButton(
                                       icon: const Icon(Icons.visibility),
                                       onPressed: () {
-                                        // وظيفة "عرض"
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
@@ -185,23 +113,35 @@ class DashboardScreen extends StatelessWidget {
                                     IconButton(
                                       icon: const Icon(Icons.edit),
                                       onPressed: () {
-                                        // TODO: تعديل
+                                        // تعديل القرار
                                       },
                                       tooltip: 'تعديل',
                                     ),
                                     IconButton(
                                       icon: const Icon(Icons.delete),
                                       onPressed: () {
-                                        // TODO: حذف
+                                        // حذف القرار
                                       },
                                       tooltip: 'حذف',
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.work),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                PostDecisionWorkflowPage(),
+                                          ),
+                                        );
+                                      },
+                                      tooltip: 'إجراءات ما بعد القرار',
                                     ),
                                   ],
                                 ),
                               ),
                             ],
                           ),
-                          // صف ثاني كمثال
                           DataRow(
                             cells: [
                               const DataCell(Text('2')),
@@ -236,6 +176,19 @@ class DashboardScreen extends StatelessWidget {
                                       icon: const Icon(Icons.delete),
                                       onPressed: () {},
                                       tooltip: 'حذف',
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.work),
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                PostDecisionWorkflowPage(),
+                                          ),
+                                        );
+                                      },
+                                      tooltip: 'إجراءات ما بعد القرار',
                                     ),
                                   ],
                                 ),
