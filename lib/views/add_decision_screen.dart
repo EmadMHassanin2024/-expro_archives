@@ -12,7 +12,6 @@ class AddDecisionScreen extends StatefulWidget {
 class _AddDecisionScreenState extends State<AddDecisionScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Fields
   String title = '';
   String description = '';
   String decisionNumber = '';
@@ -70,146 +69,186 @@ class _AddDecisionScreenState extends State<AddDecisionScreen> {
       textDirection: ui.TextDirection.ltr,
       child: Scaffold(
         appBar: AppBar(title: Text('إضافة قرار نزع ملكية')),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: ListView(
-              children: [
-                _buildLabel('اسم القرار'),
-                TextFormField(
-                  decoration: _inputDecoration('أدخل اسم القرار'),
-                  onSaved: (value) => title = value ?? '',
-                  validator: _requiredValidator,
-                ),
-                SizedBox(height: 16),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            bool isWideScreen = constraints.maxWidth >= 600;
 
-                _buildLabel('وصف القرار'),
-                TextFormField(
-                  maxLines: 3,
-                  decoration: _inputDecoration('أدخل وصف القرار'),
-                  onSaved: (value) => description = value ?? '',
-                  validator: _requiredValidator,
-                ),
-                SizedBox(height: 16),
-
-                _buildLabel('رقم القرار'),
-                TextFormField(
-                  decoration: _inputDecoration('أدخل رقم القرار'),
-                  onSaved: (value) => decisionNumber = value ?? '',
-                  validator: _requiredValidator,
-                ),
-                SizedBox(height: 16),
-
-                _buildLabel('تاريخ القرار'),
-                InkWell(
-                  onTap: _pickDecisionDate,
-                  child: InputDecorator(
-                    decoration: _inputDecoration('اختر تاريخ القرار'),
-                    child: Text(
-                      decisionDate == null
-                          ? ''
-                          : DateFormat('yyyy-MM-dd').format(decisionDate!),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16),
-
-                _buildLabel('اسم المالك'),
-                TextFormField(
-                  decoration: _inputDecoration('أدخل اسم المالك'),
-                  onSaved: (value) => ownerName = value ?? '',
-                  validator: _requiredValidator,
-                ),
-                SizedBox(height: 16),
-
-                _buildLabel('المساحة'),
-                TextFormField(
-                  decoration: _inputDecoration('أدخل المساحة'),
-                  onSaved: (value) => area = value ?? '',
-                  validator: _requiredValidator,
-                ),
-                SizedBox(height: 16),
-
-                _buildLabel('المنطقة'),
-                TextFormField(
-                  decoration: _inputDecoration('أدخل اسم المنطقة'),
-                  onSaved: (value) => region = value ?? '',
-                  validator: _requiredValidator,
-                ),
-                SizedBox(height: 16),
-
-                _buildLabel('تاريخ الإنشاء'),
-                InkWell(
-                  onTap: _pickCreatedAtDate,
-                  child: InputDecorator(
-                    decoration: _inputDecoration('اختر تاريخ الإنشاء'),
-                    child: Text(
-                      createdAt == null
-                          ? ''
-                          : DateFormat('yyyy-MM-dd').format(createdAt!),
-                    ),
-                  ),
-                ),
-                SizedBox(height: 16),
-
-                _buildLabel('إدراج المرفق'),
-                ElevatedButton.icon(
-                  icon: Icon(Icons.attach_file),
-                  label: Text('اختر ملف'),
-                  onPressed: _pickAttachment,
-                ),
-                if (attachmentFileName != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text('الملف: $attachmentFileName'),
-                  ),
-                SizedBox(height: 24),
-
-                Row(
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                child: Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
                   children: [
-                    Expanded(
-                      child: ElevatedButton(
-                        child: Text('حفظ'),
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            _formKey.currentState!.save();
-                            // يمكنك هنا إرسال البيانات إلى الخادم أو حفظها
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('تم حفظ البيانات بنجاح')),
-                            );
-                          }
-                        },
+                    _buildFormField(
+                      label: 'اسم القرار',
+                      child: TextFormField(
+                        decoration: _inputDecoration('أدخل اسم القرار'),
+                        onSaved: (value) => title = value ?? '',
+                        validator: _requiredValidator,
                       ),
+                      isWide: isWideScreen,
                     ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: OutlinedButton(
-                        child: Text('إلغاء'),
-                        onPressed: () {
-                          _formKey.currentState?.reset();
-                          setState(() {
-                            decisionDate = null;
-                            createdAt = null;
-                            attachmentFileName = null;
-                          });
-                        },
+                    _buildFormField(
+                      label: 'وصف القرار',
+                      child: TextFormField(
+                        maxLines: 3,
+                        decoration: _inputDecoration('أدخل وصف القرار'),
+                        onSaved: (value) => description = value ?? '',
+                        validator: _requiredValidator,
                       ),
+                      isWide: isWideScreen,
+                    ),
+                    _buildFormField(
+                      label: 'رقم القرار',
+                      child: TextFormField(
+                        decoration: _inputDecoration('أدخل رقم القرار'),
+                        onSaved: (value) => decisionNumber = value ?? '',
+                        validator: _requiredValidator,
+                      ),
+                      isWide: isWideScreen,
+                    ),
+                    _buildFormField(
+                      label: 'تاريخ القرار',
+                      child: InkWell(
+                        onTap: _pickDecisionDate,
+                        child: InputDecorator(
+                          decoration: _inputDecoration('اختر تاريخ القرار'),
+                          child: Text(
+                            decisionDate == null
+                                ? ''
+                                : DateFormat(
+                                    'yyyy-MM-dd',
+                                  ).format(decisionDate!),
+                          ),
+                        ),
+                      ),
+                      isWide: isWideScreen,
+                    ),
+                    _buildFormField(
+                      label: 'اسم المالك',
+                      child: TextFormField(
+                        decoration: _inputDecoration('أدخل اسم المالك'),
+                        onSaved: (value) => ownerName = value ?? '',
+                        validator: _requiredValidator,
+                      ),
+                      isWide: isWideScreen,
+                    ),
+                    _buildFormField(
+                      label: 'المساحة',
+                      child: TextFormField(
+                        decoration: _inputDecoration('أدخل المساحة'),
+                        onSaved: (value) => area = value ?? '',
+                        validator: _requiredValidator,
+                      ),
+                      isWide: isWideScreen,
+                    ),
+                    _buildFormField(
+                      label: 'المنطقة',
+                      child: TextFormField(
+                        decoration: _inputDecoration('أدخل اسم المنطقة'),
+                        onSaved: (value) => region = value ?? '',
+                        validator: _requiredValidator,
+                      ),
+                      isWide: isWideScreen,
+                    ),
+                    _buildFormField(
+                      label: 'تاريخ الإنشاء',
+                      child: InkWell(
+                        onTap: _pickCreatedAtDate,
+                        child: InputDecorator(
+                          decoration: _inputDecoration('اختر تاريخ الإنشاء'),
+                          child: Text(
+                            createdAt == null
+                                ? ''
+                                : DateFormat('yyyy-MM-dd').format(createdAt!),
+                          ),
+                        ),
+                      ),
+                      isWide: isWideScreen,
+                    ),
+                    _buildFormField(
+                      label: 'إدراج المرفق',
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ElevatedButton.icon(
+                            icon: Icon(Icons.attach_file),
+                            label: Text('اختر ملف'),
+                            onPressed: _pickAttachment,
+                          ),
+                          if (attachmentFileName != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text('الملف: $attachmentFileName'),
+                            ),
+                        ],
+                      ),
+                      isWide: isWideScreen,
+                    ),
+                    SizedBox(width: double.infinity),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            child: Text('حفظ'),
+                            onPressed: () {
+                              if (_formKey.currentState!.validate()) {
+                                _formKey.currentState!.save();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('تم حفظ البيانات بنجاح'),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: OutlinedButton(
+                            child: Text('إلغاء'),
+                            onPressed: () {
+                              _formKey.currentState?.reset();
+                              setState(() {
+                                decisionDate = null;
+                                createdAt = null;
+                                attachmentFileName = null;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+  Widget _buildFormField({
+    required String label,
+    required Widget child,
+    required bool isWide,
+  }) {
+    return SizedBox(
+      width: isWide ? 300 : double.infinity,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+          ),
+          SizedBox(height: 8),
+          child,
+        ],
+      ),
     );
   }
 
