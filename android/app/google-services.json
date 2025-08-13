@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "843782203234",
+    "project_id": "exproarcheive",
+    "storage_bucket": "exproarcheive.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:843782203234:android:2ef6cfa56bc90aaf2fee3b",
+        "android_client_info": {
+          "package_name": "com.example.expro_archives"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB1todp813iHYco6Lpy_ersh9hdUERUdno"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
