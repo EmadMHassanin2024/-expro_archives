@@ -2,7 +2,6 @@ import 'package:expro_archives/models/workflow_step.dart';
 
 class DecisionModel {
   final String? id;
-
   final String title;
   final String description;
   final String decisionNumber;
@@ -13,13 +12,9 @@ class DecisionModel {
   final String? draftDecisionPath;
   final String? draftCeoLetterPath;
   final String? draftMinisterialPath;
-
-  final String? draftPdfPath;
-
+  final String? draftPdfPath; // تمت إضافته
   final List<String> attachments;
-
   final DateTime? createdAt;
-
   final List<WorkflowStep> workflowSteps;
 
   DecisionModel({
@@ -31,14 +26,17 @@ class DecisionModel {
     required this.ownerName,
     required this.area,
     required this.region,
-    required this.draftPdfPath,
+    String? draftUrl, // لإعداد draftPdfPath بناءً على الشرط
     this.draftDecisionPath,
     this.draftCeoLetterPath,
     this.draftMinisterialPath,
     required this.attachments,
     this.createdAt,
     required this.workflowSteps,
-  });
+    required List<String> searchKeywords,
+  }) : draftPdfPath = (draftUrl != null && draftUrl.isNotEmpty)
+           ? draftUrl
+           : null;
 
   Map<String, dynamic> toJson() {
     return {
@@ -80,10 +78,11 @@ class DecisionModel {
       ownerName: ownerName ?? this.ownerName,
       area: area ?? this.area,
       region: region ?? this.region,
-      draftPdfPath: draftPdfPath ?? this.draftPdfPath,
+      draftUrl: draftPdfPath ?? this.draftPdfPath, // يتم تمريره للكونستركتور
       attachments: attachments ?? this.attachments,
       createdAt: createdAt ?? this.createdAt,
       workflowSteps: workflowSteps ?? this.workflowSteps,
+      searchKeywords: [],
     );
   }
 }

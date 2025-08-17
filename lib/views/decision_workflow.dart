@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class PostDecisionWorkflowPage extends StatelessWidget {
-  const PostDecisionWorkflowPage({Key? key}) : super(key: key);
+  const PostDecisionWorkflowPage({super.key});
 
   @override
   Widget build(BuildContext context) {

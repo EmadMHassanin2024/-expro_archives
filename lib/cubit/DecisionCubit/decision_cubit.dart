@@ -11,8 +11,10 @@ class DecisionCubit extends Cubit<DecisionCubitState> {
   DecisionCubit() : super(DecisionCubitInitial());
 
   DecisionModel? _currentDecision;
+  List<DecisionModel> allDecisions = [];
 
   DecisionModel get currentDecision => _currentDecision!;
+
   Future<String> addDecision({
     required String title,
     required String description,
@@ -29,10 +31,11 @@ class DecisionCubit extends Cubit<DecisionCubitState> {
     String? draftMinisterialPath,
   }) async {
     try {
-      // إنشاء معرف القرار
+      emit(DecisionCubitLoading());
+
       final decisionId = const Uuid().v4();
 
-      final newDecision = DecisionModel(
+      final currentDecision = DecisionModel(
         id: decisionId,
         title: title,
         description: description,
@@ -42,30 +45,48 @@ class DecisionCubit extends Cubit<DecisionCubitState> {
         area: area,
         region: region,
         createdAt: createdAt,
-        draftPdfPath: draftPdfPath,
+        draftUrl: draftPdfPath,
         attachments: attachments,
         workflowSteps: workflowSteps,
+        searchKeywords: [],
       );
 
-      // في المستقبل ممكن تحفظه في Firebase
       await FirebaseFirestore.instance
           .collection('decisions')
           .doc(decisionId)
-          .set(newDecision.toJson());
+          .set(currentDecision.toJson());
 
-      _currentDecision = newDecision;
-      emit(DecisionCubitSuccess(newDecision));
+      _currentDecision = currentDecision;
 
-      // إرجاع معرف القرار
+      emit(DecisionCubitSuccess(currentDecision));
       return decisionId;
     } catch (e) {
       emit(DecisionCubitError("حدث خطأ أثناء إضافة القرار: $e"));
-      rethrow; // عشان لو حابب تتعامل مع الخطأ فوق
+      rethrow;
     }
   }
 
   void updateField({required DecisionModel updated}) {
     _currentDecision = updated;
     emit(DecisionCubitUpdated(updated));
+  }
+
+  void loadDecisions(List<DecisionModel> decisions) {
+    allDecisions = decisions;
+    emit(DecisionLoaded(decisions));
+  }
+
+  void filterDecisions(String query) {
+    emit(DecisionLoaded(allDecisions));
+
+    final filtered = allDecisions.where((decision) {
+      final ownerLower = decision.ownerName.toLowerCase();
+      final regionLower = decision.region.toLowerCase();
+      final searchLower = query.toLowerCase();
+      return ownerLower.contains(searchLower) ||
+          regionLower.contains(searchLower);
+    }).toList();
+
+    emit(DecisionLoaded(filtered)); // عرض البيانات بعد البحث
   }
 }

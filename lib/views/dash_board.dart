@@ -1,15 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:expro_archives/models/decision_model.dart';
-import 'package:flutter/material.dart';
-import 'package:expro_archives/views/add_decision_screen.dart';
-import 'package:expro_archives/views/view_decision_screen.dart';
 import 'package:expro_archives/views/decision_workflow.dart';
 
-class DashboardScreen extends StatelessWidget {
+import 'package:expro_archives/widget/deponcer.dart';
+import 'package:flutter/material.dart';
+import 'package:expro_archives/models/decision_model.dart';
+import 'package:expro_archives/views/add_decision_screen.dart';
+import 'package:expro_archives/views/view_decision_screen.dart';
+
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key, this.newDecision});
   final DecisionModel? newDecision;
 
-  // إضافة قرارات وهمية
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  String searchQuery = '';
+  final searchController = TextEditingController();
+  final _debouncer = Debouncer(milliseconds: 300);
+
   void addFakeDecisions() {
     final fakeDecisions = [
       DecisionModel(
@@ -20,9 +30,10 @@ class DashboardScreen extends StatelessWidget {
         ownerName: 'مالك 1',
         area: '100 متر مربع',
         region: 'المنطقة أ',
-        draftPdfPath: null,
+        draftUrl: null,
         attachments: [],
         workflowSteps: [],
+        searchKeywords: [],
       ),
       DecisionModel(
         title: 'قرار نزع ملكية 2',
@@ -32,9 +43,10 @@ class DashboardScreen extends StatelessWidget {
         ownerName: 'مالك 2',
         area: '150 متر مربع',
         region: 'المنطقة ب',
-        draftPdfPath: null,
+        draftUrl: null,
         attachments: [],
         workflowSteps: [],
+        searchKeywords: [],
       ),
       DecisionModel(
         title: 'قرار نزع ملكية 3',
@@ -44,9 +56,10 @@ class DashboardScreen extends StatelessWidget {
         ownerName: 'مالك 3',
         area: '200 متر مربع',
         region: 'المنطقة ج',
-        draftPdfPath: null,
+        draftUrl: null,
         attachments: [],
         workflowSteps: [],
+        searchKeywords: [],
       ),
     ];
 
@@ -56,17 +69,31 @@ class DashboardScreen extends StatelessWidget {
         'title': decision.title,
         'description': decision.description,
         'decisionNumber': decision.decisionNumber,
-        'decisionDate': Timestamp.fromDate(
-          decision.decisionDate,
-        ), // تخزين كتاريخ
+        'decisionDate': Timestamp.fromDate(decision.decisionDate),
         'ownerName': decision.ownerName,
         'area': decision.area,
         'region': decision.region,
         'draftPdfPath': decision.draftPdfPath,
         'attachments': decision.attachments,
-        'createdAt': Timestamp.now(),
         'workflowSteps': [],
+        'createdAt': Timestamp.now(),
       });
+    }
+  }
+
+  Future<void> deleteDecision(String docId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('decisions')
+          .doc(docId)
+          .delete();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('تم حذف القرار بنجاح')));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('حدث خطأ أثناء الحذف: $e')));
     }
   }
 
@@ -130,8 +157,18 @@ class DashboardScreen extends StatelessWidget {
                   SizedBox(
                     width: isMobile ? screenWidth - 32 : 400,
                     child: TextField(
+                      controller: searchController,
+                      onChanged: (value) {
+                        _debouncer.run(() {
+                          if (!mounted) return; // أمان إضافي لو اتقفلت الشاشة
+
+                          setState(() => searchQuery = value);
+                        });
+                      },
+
                       decoration: InputDecoration(
-                        hintText: 'ابحث باسم المالك أو المنطقة...',
+                        labelText: 'البحث',
+                        hintText: '   ابحث باسم المالك او المنطقة ...',
                         prefixIcon: const Icon(Icons.search),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -157,7 +194,13 @@ class DashboardScreen extends StatelessWidget {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  final decisionsDocs = snapshot.data!.docs;
+                  final decisionsDocs = snapshot.data!.docs.where((doc) {
+                    final data = doc.data()! as Map<String, dynamic>;
+                    final owner = data['ownerName'] ?? '';
+                    final region = data['region'] ?? '';
+                    return owner.contains(searchQuery) ||
+                        region.contains(searchQuery);
+                  }).toList();
 
                   if (decisionsDocs.isEmpty) {
                     return const Center(child: Text('لا توجد قرارات'));
@@ -165,147 +208,149 @@ class DashboardScreen extends StatelessWidget {
 
                   return LayoutBuilder(
                     builder: (context, constraints) {
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minWidth: constraints.maxWidth,
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: DataTable(
-                              columnSpacing: isMobile ? 8 : 20,
-                              headingRowColor: MaterialStateProperty.all(
-                                Colors.teal.shade100,
-                              ),
-                              border: TableBorder.all(
-                                color: Colors.grey.shade300,
-                              ),
-                              columns: [
-                                const DataColumn(label: Text('م')),
-                                const DataColumn(label: Text('اسم القرار')),
-                                const DataColumn(label: Text('الرقم')),
-                                if (!isMobile)
-                                  const DataColumn(label: Text('التاريخ')),
-                                if (!isMobile)
-                                  const DataColumn(label: Text('المالك')),
-                                if (isTablet || isWeb)
-                                  const DataColumn(label: Text('المساحة')),
-                                if (isTablet || isWeb)
-                                  const DataColumn(label: Text('المنطقة')),
-                                const DataColumn(label: Text('الإجراءات')),
-                              ],
-                              rows: List.generate(decisionsDocs.length, (
-                                index,
-                              ) {
-                                final doc = decisionsDocs[index];
-                                final data =
-                                    doc.data()! as Map<String, dynamic>;
+                      return Scrollbar(
+                        thumbVisibility: true,
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              minWidth: constraints.maxWidth,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
 
-                                final id = (index + 1).toString();
-                                final title = data['title'] ?? '';
-                                final number =
-                                    data['decisionNumber']?.toString() ?? '';
-                                final owner = data['ownerName'] ?? '';
-                                final area = data['area'] ?? '';
-                                final region = data['region'] ?? '';
-
-                                // التعامل مع التاريخ كـ Timestamp
-                                String formattedDate = '';
-                                if (data['decisionDate'] is Timestamp) {
-                                  final date =
-                                      (data['decisionDate'] as Timestamp)
-                                          .toDate();
-                                  formattedDate =
-                                      '${date.day}/${date.month}/${date.year}';
-                                }
-
-                                return DataRow(
-                                  cells: [
-                                    DataCell(Text(id)),
-                                    DataCell(Text(title)),
-                                    DataCell(Text(number)),
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.vertical,
+                                child: DataTable(
+                                  headingRowHeight: 56,
+                                  columnSpacing: isMobile ? 8 : 20,
+                                  headingRowColor: MaterialStateProperty.all(
+                                    Colors.teal.shade100,
+                                  ),
+                                  border: TableBorder.all(
+                                    color: Colors.grey.shade400,
+                                    width: 1,
+                                  ),
+                                  columns: [
+                                    const DataColumn(label: Text('م')),
+                                    const DataColumn(label: Text('اسم القرار')),
+                                    const DataColumn(label: Text('الرقم')),
                                     if (!isMobile)
-                                      DataCell(Text(formattedDate)),
-                                    if (!isMobile) DataCell(Text(owner)),
-                                    if (isTablet || isWeb) DataCell(Text(area)),
+                                      const DataColumn(label: Text('التاريخ')),
+                                    if (!isMobile)
+                                      const DataColumn(label: Text('المالك')),
                                     if (isTablet || isWeb)
-                                      DataCell(Text(region)),
-                                    DataCell(
-                                      Wrap(
-                                        spacing: 4,
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.visibility),
-                                            tooltip: 'عرض',
-                                            onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (_) =>
-                                                      ViewDecisionScreen(
-                                                        decisionId: doc.id,
-                                                      ),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.edit),
-                                            tooltip: 'تعديل',
-                                            onPressed: () {
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                    'ميزة التعديل لم تُفعّل بعد',
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.delete),
-                                            tooltip: 'حذف',
-                                            onPressed: () async {
-                                              await FirebaseFirestore.instance
-                                                  .collection('decisions')
-                                                  .doc(doc.id)
-                                                  .delete();
-
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    'تم حذف القرار: $title',
-                                                  ),
-                                                  backgroundColor:
-                                                      Colors.red[400],
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.work),
-                                            tooltip: 'إجراءات ما بعد القرار',
-                                            onPressed: () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (_) =>
-                                                      PostDecisionWorkflowPage(),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ),
+                                      const DataColumn(label: Text('المساحة')),
+                                    if (isTablet || isWeb)
+                                      const DataColumn(label: Text('المنطقة')),
+                                    const DataColumn(label: Text('الإجراءات')),
                                   ],
-                                );
-                              }),
+                                  rows: List.generate(decisionsDocs.length, (
+                                    index,
+                                  ) {
+                                    final doc = decisionsDocs[index];
+                                    final data =
+                                        doc.data()! as Map<String, dynamic>;
+
+                                    final id = (index + 1).toString();
+                                    final title = data['title'] ?? '';
+                                    final number =
+                                        data['decisionNumber']?.toString() ??
+                                        '';
+                                    final owner = data['ownerName'] ?? '';
+                                    final area = data['area'] ?? '';
+                                    final region = data['region'] ?? '';
+
+                                    String formattedDate = '';
+                                    if (data['decisionDate'] is Timestamp) {
+                                      final date =
+                                          (data['decisionDate'] as Timestamp)
+                                              .toDate();
+                                      formattedDate =
+                                          '${date.day}/${date.month}/${date.year}';
+                                    }
+
+                                    return DataRow(
+                                      cells: [
+                                        DataCell(Text(id)),
+                                        DataCell(Text(title)),
+                                        DataCell(Text(number)),
+                                        if (!isMobile)
+                                          DataCell(Text(formattedDate)),
+                                        if (!isMobile) DataCell(Text(owner)),
+                                        if (isTablet || isWeb)
+                                          DataCell(Text(area)),
+                                        if (isTablet || isWeb)
+                                          DataCell(Text(region)),
+                                        DataCell(
+                                          Wrap(
+                                            spacing: 4,
+                                            children: [
+                                              IconButton(
+                                                icon: const Icon(
+                                                  Icons.visibility,
+                                                ),
+                                                tooltip: 'عرض',
+                                                onPressed: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          ViewDecisionScreen(
+                                                            decisionId: doc.id,
+                                                          ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+
+                                              IconButton(
+                                                icon: const Icon(Icons.edit),
+                                                tooltip: 'تعديل',
+                                                onPressed: () {
+                                                  ScaffoldMessenger.of(
+                                                    context,
+                                                  ).showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text(
+                                                        'ميزة التعديل لم تُفعّل بعد',
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(
+                                                  Icons.delete,
+                                                  color: Colors.red,
+                                                ),
+                                                tooltip: 'حذف',
+                                                onPressed: () {
+                                                  deleteDecision(doc.id);
+                                                },
+                                              ),
+                                              IconButton(
+                                                icon: const Icon(Icons.work),
+                                                tooltip:
+                                                    'إجراءات ما بعد القرار',
+                                                onPressed: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          PostDecisionWorkflowPage(),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }),
+                                ),
+                              ),
                             ),
                           ),
                         ),
